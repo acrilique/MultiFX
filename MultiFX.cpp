@@ -24,7 +24,8 @@ int              mode = REV;
 float currentDelay, feedback, delayTarget, cutoff;
 
 int   crushmod, crushcount;
-float crushsl, crushsr, drywet;
+float crushsl, crushsr;
+float drywet = 0.5f;
 
 
 //Helper functions
@@ -76,15 +77,18 @@ int main(void)
     pod.Init();
     pod.SetAudioBlockSize(4);
     sample_rate = pod.AudioSampleRate();
-    filt.Init(sample_rate);
+    filtl.Init(sample_rate);
+    filtr.Init(sample_rate);
     rev.Init(sample_rate);
     dell.Init();
     delr.Init();
     tone.Init(sample_rate);
 
     //fixed hpf before the reverb
+    filtl.SetDrive(.5f);
     filtl.SetRes(0.7f);
     filtl.SetFreq(120.f);
+    filtr.SetDrive(.5f);
     filtr.SetRes(0.7f);
     filtr.SetFreq(120.f);
 
@@ -117,8 +121,8 @@ void UpdateKnobs(float &k1, float &k2)
     switch(mode)
     {
         case REV:
-            drywet = k1;
-            rev.SetFeedback(k2);
+            rev.SetFeedback(k1);
+            rev.SetLpFreq(k2 * 18000.f);
             break;
         case DEL:
             delayTarget = deltime.Process();
@@ -168,8 +172,8 @@ void GetReverbSample(float &outl, float &outr, float inl, float inr)
     filtl.Process(inl);
     filtr.Process(inr);
     rev.Process(filtl.High(), filtr.High(), &outl, &outr);
-    outl = drywet * outl + (1 - drywet) * inl;
-    outr = drywet * outr + (1 - drywet) * inr;
+    // outl = drywet * outl + (1 - drywet) * inl;
+    // outr = drywet * outr + (1 - drywet) * inr;
 }
 
 void GetDelaySample(float &outl, float &outr, float inl, float inr)
